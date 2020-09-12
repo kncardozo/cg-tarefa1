@@ -6,19 +6,19 @@
 
 
         /* ------------------------------------------------------------ */
-    //Função que calcula o vetor normal entre dois pontos
-     
+    //Funções que calculam os max e min de um array, auxilia nas Bouding Box     
     function arrayMin(arr) {
         return arr.reduce(function (p, v) {
             return ( p < v ? p : v );
         });
-    }
-    
+    }    
     function arrayMax(arr) {
         return arr.reduce(function (p, v) {
             return ( p > v ? p : v );
         });
     }
+
+
     //Criar Bounding Box
     function createBoundingBox(primitive){
         var x_0 = 0;
@@ -39,6 +39,7 @@
             //0 representa o inicial e 1 o final
             for(var i=0;i<pontos;i++){
                 for(var j=0;j<eixos;j++){
+                    
                     if(j==0){
                         coord_x.push(V[i][j]);
                     }else{
@@ -51,9 +52,11 @@
             x_0 = arrayMin(coord_x);
             x_1 = arrayMax(coord_x);
             y_0 = arrayMin(coord_y);
-            y_1 = arrayMax(coord_y);            
+            y_1 = arrayMax(coord_y); 
+                       
         }else{
-            // //calcular a bounding box do circulo
+            // Não é mais necessária
+            //calcular a bounding box do circulo
             // var r = primitive.radius;
             // var h = primitive.center.get(0);
             // var k = primitive.center.get(1);
@@ -64,7 +67,6 @@
             // x_1 = h+r;
             // y_0 = k-r;
             // y_1 = k+r;
-
         }
         
         coordenadasBox = {  
@@ -76,7 +78,9 @@
 
         return coordenadasBox;
     }
-    
+
+
+    //Função que calcula o vetor normal, auxiliar ao inside do triangulo
     function vNormal(A, B){
         var N = [-1*(B[1]-A[1]), (B[0] - A[0])];        
         return N;
@@ -114,7 +118,8 @@
                     return true;
                 }
             // }
-            // else if(primitive.shape == "circle" ){
+            //Cálculo para primitiva Circulo, por opção inutilizada para implementação do extra  
+            //else if(primitive.shape == "circle" ){
             //     var r = primitive.radius;
             //     var h = primitive.center.get(0);
             //     var k = primitive.center.get(1);
@@ -137,20 +142,22 @@
         this.scene = this.preprocess(scene);   
         this.createImage(); 
     }
-    
+
+
+    //Função para converter Grau em Radiano
     function toRadians(a){
-        return (a*Math.PI)/180;
+        var resultado = (a*Math.PI)/180;
+        return resultado;
     }
 
-    function toTriangles(primitive){
-
-        var preprop_scene = [];
+    //Função que recebe uma primitiva do tipo poligono e converte em vários triangulos
+    function toTriangles(preprop_scene, primitive ){        
 
         var V = primitive.vertices;
         
         var pontos = V.length; //Quantidade de pontos
         
-        //Fixar um ponto
+        //Fixar o ponto inicial
         var P0 = [V[0][0], V[0][1]];
 
         //Montando o grupo dos próximos triângulos
@@ -165,82 +172,78 @@
                 ],
                 color: primitive.color,   
             };
-            debugger;
+            
             console.log("Primitiva " + k);
             console.log(triangulo);
 
             var boundingBox = createBoundingBox(triangulo);
             preprop_scene.push( boundingBox );
 
-            preprop_scene.push(triangulo);                            
+            preprop_scene.push( triangulo );                            
             
         }  
-
+        console.log("To Triangles", preprop_scene);
         return preprop_scene;
     }
 
     Object.assign( Screen.prototype, {
 
-            preprocess: function(scene) {                
-                // Possible preprocessing with scene primitives, for now we don't change anything
-                // You may define bounding boxes, convert shapes, etc
-                
+            preprocess: function(scene) {
                 var preprop_scene = [];
                 
                 for( var primitive of scene ) {  
                     
                     if(primitive.shape == "polygon" ){
-                        //Converter Poligonos em triangulos                        
+                        //Pré processamento do poligono, convertido para triangulos                      
                         primitive.vertices = primitive.vertices.tolist();
-                        preprop_scene = toTriangles(primitive);
+                        preprop_scene = toTriangles(preprop_scene, primitive);
                  
                         
-                    } else if(primitive.shape == "circle") {
-                        //assumindo número de fatias igual a 8
+                    }if(primitive.shape == "circle") {
+                        
                         var r = primitive.radius;
                         var h = primitive.center.get(0);
                         var k = primitive.center.get(1);
                         
-                        var p = 8; //numero de partes q vamos dividir o circulo
+                        var numLados = 20; //numero de lados 
+                        var numVertices = numLados+2;
 
                         var P0 = [h ,k];                        
-                        var V = []; 
-                        V.push(P0);                     
-                        var alpha = 360/p;
+                        var Vertices = []; 
+                        Vertices.push(P0);     
+                                        
+                        var alpha = 360/numLados;
+                        var theta = []; 
                         
-                        for(var i=0; i < p+3 ; i++){            
-                                           
-                            var theta = toRadians(alpha*i); 
-                            var x = r * Math.cos(theta)+h;
-                            var y = r * Math.sin(theta)+k;
-
+                        for(var i = 0; i < numVertices ; i++){            
+                                        
+                            theta = (alpha*i); 
+                            var x = Math.floor((r * Math.cos(toRadians(theta))) + h);
+                            var y = Math.floor((r * Math.sin(toRadians(theta))) + k);
+                            
                             var P = [x,y];
-                            V.push(P);                           
+                            Vertices.push(P);                           
 
                         }
-                        console.log("Vertices: ", V);
+                        console.log("Vertices: ", Vertices);
+
                         var polygon = {
                             shape:"polygon",
-                            vertices: V,
+                            vertices: Vertices,
                             color: primitive.color,   
                         };
-                        preprop_scene = toTriangles(polygon);                       
+                        preprop_scene = toTriangles(preprop_scene, polygon);                      
                         
                                
-                    } if(primitive.shape == "triangle"){
+                    }if(primitive.shape == "triangle"){
                         primitive.vertices = primitive.vertices.tolist();
                          
                         var boundingBox = createBoundingBox(primitive);            
                         preprop_scene.push( boundingBox );
                         
                         preprop_scene.push( primitive );
-                    }else{
-                        var boundingBox = createBoundingBox(primitive);            
-                        preprop_scene.push( boundingBox );
-
-                        preprop_scene.push( primitive );   
-                          
-                    }                    
+                    } 
+                                        
                                   
                 }
 
@@ -256,7 +259,7 @@
                 
                 for(var k=0;k<this.scene.length;k=k+2){
                     var bbox = this.scene[k];
-                    console.log(bbox);//Debug bounding box
+                   
                     var primitive = this.scene[k+1];
               
                     for (var i = bbox.x_0; i <= bbox.x_1; i++) {
