@@ -7,11 +7,18 @@
 
         /* ------------------------------------------------------------ */
     //Função que calcula o vetor normal entre dois pontos
-    function vNormal(A, B){
-        var N = nj.array([-1*(B.get(1)-A.get(1)), (B.get(0) - A.get(0))]);        
-        return N;
-    }    
-
+     
+    function arrayMin(arr) {
+        return arr.reduce(function (p, v) {
+            return ( p < v ? p : v );
+        });
+    }
+    
+    function arrayMax(arr) {
+        return arr.reduce(function (p, v) {
+            return ( p > v ? p : v );
+        });
+    }
     //Criar Bounding Box
     function createBoundingBox(primitive){
         var x_0 = 0;
@@ -19,12 +26,12 @@
         var y_0 = 0;
         var y_1 = 0;   
 
-        if(primitive.shape == "triangle" || primitive.shape== "polygon"){
+        if(primitive.shape == "triangle"){
             var V = primitive.vertices;
-            var eixos = V.shape[1];
-            var pontos = V.shape[0];
-            var coord_x = nj.array();
-            var coord_y = nj.array();
+            var eixos = V[0].length;
+            var pontos = V.length;
+            var coord_x = [];
+            var coord_y = [];
 
             var coordenadasBox = [];
 
@@ -33,30 +40,30 @@
             for(var i=0;i<pontos;i++){
                 for(var j=0;j<eixos;j++){
                     if(j==0){
-                        coord_x = nj.concatenate(coord_x, V.get(i,j));
+                        coord_x.push(V[i][j]);
                     }else{
-                        coord_y = nj.concatenate(coord_y, V.get(i,j));
+                        coord_y.push(V[i][j]);
                     } 
                 }
             }
 
             //salvando as coordenadas da Bounding Box
-            x_0 = coord_x.min();
-            x_1 = coord_x.max();
-            y_0 = coord_y.min();
-            y_1 = coord_y.max();            
+            x_0 = arrayMin(coord_x);
+            x_1 = arrayMax(coord_x);
+            y_0 = arrayMin(coord_y);
+            y_1 = arrayMax(coord_y);            
         }else{
-            //calcular a bounding box do circulo
-            var r = primitive.radius;
-            var h = primitive.center.get(0);
-            var k = primitive.center.get(1);
+            // //calcular a bounding box do circulo
+            // var r = primitive.radius;
+            // var h = primitive.center.get(0);
+            // var k = primitive.center.get(1);
 
-            //Observando que o raio do circulo é exatamente a metade do comprimento de um lado do quadrado
-            //Usando o centro e o raio dado podemos estimar o vértices da box
-            x_0 = h-r;
-            x_1 = h+r;
-            y_0 = k-r;
-            y_1 = k+r;
+            // //Observando que o raio do circulo é exatamente a metade do comprimento de um lado do quadrado
+            // //Usando o centro e o raio dado podemos estimar o vértices da box
+            // x_0 = h-r;
+            // x_1 = h+r;
+            // y_0 = k-r;
+            // y_1 = k+r;
 
         }
         
@@ -69,6 +76,11 @@
 
         return coordenadasBox;
     }
+    
+    function vNormal(A, B){
+        var N = [-1*(B[1]-A[1]), (B[0] - A[0])];        
+        return N;
+    }   
 
     //função de interseção. Verificar se o ponto (x,y) está dentro da primitiva
     function inside( x, y, primitive  ) {
@@ -79,9 +91,9 @@
                 var V = primitive.vertices;
 
                 //Pegando as coordenadas dos pontos de cada vértice
-                var P0 = nj.array([V.get(0,0),V.get(0,1)]);
-                var P1 = nj.array([V.get(1,0),V.get(1,1)]);
-                var P2 = nj.array([V.get(2,0),V.get(2,1)]);
+                var P0 = [V[0][0], V[0][1]];
+                var P1 = [V[1][0], V[1][1]];
+                var P2 = [V[2][0], V[2][1]];
 
                 //vetores normais
                 var n0 = vNormal(P0, P1);
@@ -89,29 +101,29 @@
                 var n2 = vNormal(P2, P0);
 
                 //Vetores até o ponto q (x,y)
-                var d0 = nj.array([x - P0.get(0), y - P0.get(1) ]);
-                var d1 = nj.array([x - P1.get(0), y - P1.get(1) ]);
-                var d2 = nj.array([x - P2.get(0), y - P2.get(1) ]);
+                var d0 = [x - P0[0], y - P0[1] ];
+                var d1 = [x - P1[0], y - P1[1] ];
+                var d2 = [x - P2[0], y - P2[1] ];
 
                 //Calculo do produto interno dos vetores d e as normais 
-                var L0 = (d0.get(0) * n0.get(0)) + (d0.get(1) * n0.get(1));
-                var L1 = (d1.get(0) * n1.get(0)) + (d1.get(1) * n1.get(1));
-                var L2 = (d2.get(0) * n2.get(0)) + (d2.get(1) * n2.get(1));
+                var L0 = (d0[0] * n0[0]) + (d0[1] * n0[1]);
+                var L1 = (d1[0] * n1[0]) + (d1[1] * n1[1]);
+                var L2 = (d2[0] * n2[0]) + (d2[1] * n2[1]);
 
                 if(L0>0 && L1>0 && L2>0){                    
                     return true;
                 }
-            }
-            else if(primitive.shape == "circle" ){
-                var r = primitive.radius;
-                var h = primitive.center.get(0);
-                var k = primitive.center.get(1);
+            // }
+            // else if(primitive.shape == "circle" ){
+            //     var r = primitive.radius;
+            //     var h = primitive.center.get(0);
+            //     var k = primitive.center.get(1);
 
-                //calculo da equação implícita do circulo
-                var Eq_c = ((x-h)**2) + ((y-k)**2);
+            //     //calculo da equação implícita do circulo
+            //     var Eq_c = ((x-h)**2) + ((y-k)**2);
 
-                if(Eq_c == r**2 || Eq_c < r**2) return true;
-                else return false;
+            //     if(Eq_c == r**2 || Eq_c < r**2) return true;
+            //     else return false;
             }
             else{
                 return false;
@@ -125,6 +137,47 @@
         this.scene = this.preprocess(scene);   
         this.createImage(); 
     }
+    
+    function toRadians(a){
+        return (a*Math.PI)/180;
+    }
+
+    function toTriangles(primitive){
+
+        var preprop_scene = [];
+
+        var V = primitive.vertices;
+        
+        var pontos = V.length; //Quantidade de pontos
+        
+        //Fixar um ponto
+        var P0 = [V[0][0], V[0][1]];
+
+        //Montando o grupo dos próximos triângulos
+        for(var k=1; k < pontos-1 ; k++){
+            
+            var triangulo = {
+                shape:"triangle",
+                vertices: [
+                    [P0[0], P0[1]],
+                    [V[k][0], V[k][1]],
+                    [V[k+1][0], V[k+1][1]]
+                ],
+                color: primitive.color,   
+            };
+            debugger;
+            console.log("Primitiva " + k);
+            console.log(triangulo);
+
+            var boundingBox = createBoundingBox(triangulo);
+            preprop_scene.push( boundingBox );
+
+            preprop_scene.push(triangulo);                            
+            
+        }  
+
+        return preprop_scene;
+    }
 
     Object.assign( Screen.prototype, {
 
@@ -137,38 +190,54 @@
                 for( var primitive of scene ) {  
                     
                     if(primitive.shape == "polygon" ){
-                        //Converter Poligonos em triangulos
-                        //n-3 diagonais | n-2 triangulos
-                        var V = primitive.vertices;
-                        var pontos = V.shape[0]; //Quantidade de pontos
-                        //var scene_triangulos = [];//primitiva triangulo
-                       
-                        //Fixar um ponto
-                        var P0 = nj.array([V.get(0,0),V.get(0,1)]);
-        
-                        for(var k=1; k < pontos-1 ; k++){
-                            
-                            var triangulo = {
-                                shape:"triangle",
-                                vertices: nj.array([
-                                    [P0.get(0), P0.get(1)],
-                                    [V.get(k,0), V.get(k,1)],
-                                    [V.get(k+1,0), V.get(k+1,1)]
-                                ]),
-                                color: primitive.color,   
-                            };
-                            var boundingBox = createBoundingBox(triangulo);
-                            preprop_scene.push( boundingBox );
-                            preprop_scene.push(triangulo);                            
-                            
-                        }                     
+                        //Converter Poligonos em triangulos                        
+                        primitive.vertices = primitive.vertices.tolist();
+                        preprop_scene = toTriangles(primitive);
+                 
                         
-                    }else{
-                        var boundingBox = createBoundingBox(primitive);
-                        // do some processing
-                        // for now, only copies each primitive to a new list                 
-                    
+                    } else if(primitive.shape == "circle") {
+                        //assumindo número de fatias igual a 8
+                        var r = primitive.radius;
+                        var h = primitive.center.get(0);
+                        var k = primitive.center.get(1);
+                        
+                        var p = 8; //numero de partes q vamos dividir o circulo
+
+                        var P0 = [h ,k];                        
+                        var V = []; 
+                        V.push(P0);                     
+                        var alpha = 360/p;
+                        
+                        for(var i=0; i < p+3 ; i++){            
+                                           
+                            var theta = toRadians(alpha*i); 
+                            var x = r * Math.cos(theta)+h;
+                            var y = r * Math.sin(theta)+k;
+
+                            var P = [x,y];
+                            V.push(P);                           
+
+                        }
+                        console.log("Vertices: ", V);
+                        var polygon = {
+                            shape:"polygon",
+                            vertices: V,
+                            color: primitive.color,   
+                        };
+                        preprop_scene = toTriangles(polygon);                       
+                        
+                               
+                    } if(primitive.shape == "triangle"){
+                        primitive.vertices = primitive.vertices.tolist();
+                         
+                        var boundingBox = createBoundingBox(primitive);            
                         preprop_scene.push( boundingBox );
+                        
+                        preprop_scene.push( primitive );
+                    }else{
+                        var boundingBox = createBoundingBox(primitive);            
+                        preprop_scene.push( boundingBox );
+
                         preprop_scene.push( primitive );   
                           
                     }                    
@@ -192,7 +261,7 @@
               
                     for (var i = bbox.x_0; i <= bbox.x_1; i++) {
                         var x = i + 0.5;
-                        console.log("Entrei");  
+                        
                         for( var j = bbox.y_0; j <= bbox.y_1; j++) {
                             var y = j + 0.5;                            
                               
