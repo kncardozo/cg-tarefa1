@@ -5,7 +5,12 @@
 }(this, (function (exports) { 'use strict';
 
 
-        /* ------------------------------------------------------------ */
+    /* ------------------------------
+    Tarefa 1 - Computação Gráfica - PLE
+    Dupla: Karine Cardozo e Kathleen Santana
+    Professor: João Vitor Oliveira
+    Data: 12/09/2020
+    ------------------------------ */
     //Funções que calculam os max e min de um array, auxilia nas Bouding Box     
     function arrayMin(arr) {
         return arr.reduce(function (p, v) {
@@ -19,21 +24,22 @@
     }
 
 
-    //Criar Bounding Box
+    //Cria a Bounding Box e retorna os pontos extremos do retangulo 
     function createBoundingBox(primitive){
         var x_0 = 0;
         var x_1 = 0;
         var y_0 = 0;
-        var y_1 = 0;   
+        var y_1 = 0;
 
+        var coordenadasBox = [];
+
+       // Cria a Bounding Box do triangulo 
         if(primitive.shape == "triangle"){
-            var V = primitive.vertices;
-            var eixos = V[0].length;
-            var pontos = V.length;
-            var coord_x = [];
-            var coord_y = [];
-
-            var coordenadasBox = [];
+            var V = primitive.vertices; //array de vertices
+            var eixos = V[0].length; //pega a quantidade de eixos 
+            var pontos = V.length; //pega quantidade de ponts
+            var coord_x = []; //lista das coordenadas de x
+            var coord_y = []; //lista das coordenadas de y
 
             //Separa as coordenadas dos vertices em uma lista para o eixo x e y, 
             //0 representa o inicial e 1 o final
@@ -48,13 +54,14 @@
                 }
             }
 
-            //salvando as coordenadas da Bounding Box
-            x_0 = arrayMin(coord_x);
+            //setando as coordenadas da Bounding Box
+            x_0 = arrayMin(coord_x); 
             x_1 = arrayMax(coord_x);
             y_0 = arrayMin(coord_y);
             y_1 = arrayMax(coord_y); 
                        
-        }else{
+        }
+        //else{
             // Não é mais necessária
             //calcular a bounding box do circulo
             // var r = primitive.radius;
@@ -67,7 +74,7 @@
             // x_1 = h+r;
             // y_0 = k-r;
             // y_1 = k+r;
-        }
+        //}
         
         coordenadasBox = {  
             x_0: x_0,
@@ -86,7 +93,7 @@
         return N;
     }   
 
-    //função de interseção. Verificar se o ponto (x,y) está dentro da primitiva
+    //função de interseção. Verifica se o ponto (x,y) está dentro da primitiva
     function inside( x, y, primitive  ) {
             // You should implement your inside test here for all shapes   
             // for now, it only returns a false test                                   
@@ -160,7 +167,7 @@
         //Fixar o ponto inicial
         var P0 = [V[0][0], V[0][1]];
 
-        //Montando o grupo dos próximos triângulos
+        //Gerando as novas primitivas do tipo triângulos
         for(var k=1; k < pontos-1 ; k++){
             
             var triangulo = {
@@ -173,16 +180,17 @@
                 color: primitive.color,   
             };
             
-            console.log("Primitiva " + k);
-            console.log(triangulo);
+            console.log("Primitiva " + k); //teste 
+            console.log(triangulo); //teste
 
+            //Criando a Bounding Box
             var boundingBox = createBoundingBox(triangulo);
             preprop_scene.push( boundingBox );
 
             preprop_scene.push( triangulo );                            
             
         }  
-        console.log("To Triangles", preprop_scene);
+        
         return preprop_scene;
     }
 
@@ -194,13 +202,14 @@
                 for( var primitive of scene ) {  
                     
                     if(primitive.shape == "polygon" ){
-                        //Pré processamento do poligono, convertido para triangulos                      
-                        primitive.vertices = primitive.vertices.tolist();
+                        //Pré processamento do poligono, convertido para triangulos
+
+                        primitive.vertices = primitive.vertices.tolist(); //convertendo os vertices em um array nativo
                         preprop_scene = toTriangles(preprop_scene, primitive);
                  
-                        
                     }if(primitive.shape == "circle") {
-                        
+                        //Pré processamento do circulo, convertido para triangulos
+
                         var r = primitive.radius;
                         var h = primitive.center.get(0);
                         var k = primitive.center.get(1);
@@ -212,11 +221,11 @@
                         var Vertices = []; 
                         Vertices.push(P0);     
                                         
-                        var alpha = 360/numLados;
-                        var theta = []; 
+                        var alpha = 360/numLados; //para achar o angulo dos triangulos 
+                        var theta = 0; //angulo que gera os pontos no circulo
                         
                         for(var i = 0; i < numVertices ; i++){            
-                                        
+                            //gerando os pontos através da equação paramétrica            
                             theta = (alpha*i); 
                             var x = Math.floor((r * Math.cos(toRadians(theta))) + h);
                             var y = Math.floor((r * Math.sin(toRadians(theta))) + k);
@@ -225,16 +234,17 @@
                             Vertices.push(P);                           
 
                         }
-                        console.log("Vertices: ", Vertices);
+                        console.log("Vertices: ", Vertices); //teste
 
+                        //criando a nova primitiva com todos os vértices gerados
                         var polygon = {
-                            shape:"polygon",
+                            shape:"polygon", 
                             vertices: Vertices,
                             color: primitive.color,   
                         };
+                        //convertendo para triângulos e adicionando na cena
                         preprop_scene = toTriangles(preprop_scene, polygon);                      
                         
-                               
                     }if(primitive.shape == "triangle"){
                         primitive.vertices = primitive.vertices.tolist();
                          
@@ -257,11 +267,13 @@
             rasterize: function() {
                 var color;
                 
-                for(var k=0;k<this.scene.length;k=k+2){
-                    var bbox = this.scene[k];
+                //percorre a cena tratando a bounding box e sua respectiva primitiva, por isso avança de 2 em 2
+                for(var k=0; k<this.scene.length; k=k+2){
+                    var bbox = this.scene[k]; //salvando a bounding box
                    
-                    var primitive = this.scene[k+1];
-              
+                    var primitive = this.scene[k+1]; //salvando a primitiva
+                    
+                    //limitando o tamanho de acordo com a bounding box da primitiva
                     for (var i = bbox.x_0; i <= bbox.x_1; i++) {
                         var x = i + 0.5;
                         
